@@ -1,0 +1,35 @@
+{
+  "name": "json_to_php",
+  "version": "1.0.0",
+  "description": "Convert Json string to php classes",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dani-gouken/json_to_php.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dani-gouken/json_to_php/issues"
+  },
+  "homepage": "https://github.com/dani-gouken/json_to_php#readme",
+  "dependencies": {
+    "camel-case": "^4.1.2",
+    "pascal-case": "^3.1.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "@rollup/plugin-babel": "^5.2.2",
+    "@rollup/plugin-commonjs": "^17.0.0",
+    "@rollup/plugin-node-resolve": "^11.0.1",
+    "babel-jest": "^26.6.3",
+    "jest": "^26.6.3",
+    "rollup": "^2.36.0"
+  }
+}
