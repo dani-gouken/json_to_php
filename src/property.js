@@ -1,7 +1,7 @@
 import { camelCase } from "camel-case";
 import * as pluralize from "pluralize";
 import { guessType, isScalarType } from "./types";
-import { indent } from "./utils";
+import { indent,isEmpty } from "./utils";
 /**
  * Property visibility.
  * @readonly
@@ -50,11 +50,11 @@ function getPropertyInfo(key, value, { typedProperties }) {
         originalName: key,
         value: value,
         subtype: (function () {
-            if (isScalarType(type) || (value === []) || (value === {})) return null;
+            if (isScalarType(type) || isEmpty(value) || (value === {})) return null;
             let subKey = pluralize.isPlural(key) ? pluralize.singular(key) : key;
             if(type === "array"){
                 return guessType(
-                    value[0],
+                    value[0] ?? null,
                     subKey,
                 )
             }

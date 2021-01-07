@@ -33,7 +33,7 @@ function getClassInfo(json, className, config,deps) {
     const keys = Object.keys(json);
     const properties = keys.map((key) => {
         let info = getPropertyInfo(key, json[key], config);
-        if (isScalarType(info.type)) return info;
+        if (isScalarType(info.type) || info.subtype === null) return info;
         let depName = info.type === "array" ? info.subtype : info.type;
         if (!deps.has(depName)) {
             deps.add({
@@ -70,7 +70,7 @@ function buildFromArray(properties, { typedMethods }, className) {
     properties.forEach((property, i) => {
         let content = "";
         let isLast = i >= (propertiesCount - 1);
-        if (isScalarType(property.type)) {
+        if (isScalarType(property.type) || isScalarType(property.subtype)) {
             content = `$data["${property.originalName}"]${isLast ? "" : ","}`;
             result += indent(content + "\n", 3);
             return;
@@ -101,7 +101,7 @@ function buildToArray(properties, { typedMethods }, className) {
     properties.forEach((property, i) => {
         let content = "";
         let isLast = i >= (propertiesCount - 1);
-        if (isScalarType(property.type)) {
+        if (isScalarType(property.type) || isScalarType(property.subtype)) {
             content = `"${property.originalName}" => $this->${property.name}${isLast ? "" : ","}`
             result += indent(content + "\n", 3);
             return;

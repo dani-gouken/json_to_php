@@ -20,6 +20,8 @@
   "homepage": "https://github.com/dani-gouken/json_to_php#readme",
   "dependencies": {
     "camel-case": "^4.1.2",
+    "highlight.js": "^10.5.0",
+    "highlightjs": "^9.16.2",
     "pascal-case": "^3.1.2",
     "pluralize": "^8.0.0"
   },

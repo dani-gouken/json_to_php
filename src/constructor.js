@@ -24,7 +24,7 @@ function buildParameters(properties,{typedMethods}){
     let result = "";
     const propertiesCount = properties.length;
     properties.forEach((property,i) => {
-        if(typedMethods){
+        if(typedMethods && property.type != undefined){
             result += property.type + " "
         }
         result += "$" + property.name;

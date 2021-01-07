@@ -36,7 +36,10 @@ const defaultConfig  = {
  */
 function convert(jsonString,config = {}){
     config = {... defaultConfig,...config}
-    const json = JSON.parse(jsonString);
+    let json = JSON.parse(jsonString);
+    if(Array.isArray(json)){
+        json = json[0];
+    }
     const res = buildDeps(config,deps().add({
         className: config.className,
         key: null,
@@ -51,7 +54,11 @@ function convert(jsonString,config = {}){
     }
     const resCount = res.length; 
     res.forEach((v,i) => {
-        result += "\n\n" +v;
+        if(i != 0){
+            result += "\n\n"+v;
+        }else{
+            result += v;
+        }
     });
     return result;
 }
@@ -61,6 +68,7 @@ function buildDeps(config,deps,classes = []){
     if(classContent == null){
         return classes;
     }
+    let value = classContent.value;
     classes.push(buildClass(config,deps,classContent.value,classContent.className));
     return buildDeps(config,deps,classes);
 }

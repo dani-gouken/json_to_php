@@ -10,7 +10,7 @@ function buildSetter(property, { typedProperties, typedMethods }) {
     const methodName = camelCase("set" + "_" + property.name);
     let result = "";
     let declaration = `public function ${methodName}(`;
-    declaration += `${typedMethods ? property.type + " " : ""}$${property.name}`;
+    declaration += `${(typedMethods && property.type != undefined) ? property.type + " " : ""}$${property.name}`;
     declaration += !typedMethods ? ")" : "):void";
     result += indent(declaration + "{\n", 1);
     result += indent(`$this->${property.name} = $${property.name};\n`, 2);
@@ -33,7 +33,7 @@ function buildGetter(property, { typedProperties, typedMethods }) {
     const methodName = camelCase(prefix + "_" + property.name);
     let result = "";
     let declaration = `public function ${methodName}()`;
-    if (typedMethods) {
+    if (typedMethods && property.type !== undefined) {
         declaration += ":" + property.type;
     }
     result += indent(declaration + "{\n", 1);
@@ -57,7 +57,7 @@ function buildGetters(properties, config) {
  * @param {Config} config 
  */
 function buildMethod(callback, properties, config) {
-    if (!config.getters) return "";
+    if (!config.getters && !config.setters) return "";
     let result = "\n";
     const l = properties.length;
     properties.forEach((p, i) => {

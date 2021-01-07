@@ -6,6 +6,9 @@ export const guessType = (value, name) => {
             if (Array.isArray(value)) {
                 return "array";
             }
+            if(value === null){
+                return undefined;
+            }
             return pascalCase(name);
         case "boolean":
             return "bool";
@@ -15,13 +18,11 @@ export const guessType = (value, name) => {
             return "int";
         case "string":
             return "string";
-        case undefined:
-            return undefined;
         default:
             return undefined;
     }
 }
 
 export function isScalarType(type) {
-    return ["bool","int","float","string"].includes(type) || type == null;
+    return ["bool","int","float","string"].includes(type) || type === null || type === undefined;
 }
