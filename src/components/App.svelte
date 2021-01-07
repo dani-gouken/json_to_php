@@ -5,7 +5,7 @@
 import { Visibility } from "../property";
     hljs.registerLanguage("php",php);
     let visibilities = Object.values(Visibility);
-    let json = '{"name":"php","message":[]}';
+    let json = '{"name":"php","message":"rocks!"}';
     let boolOptions = [
         {"key":"getters","desc":"Enable getters"},
         {"key":"arraySerialization","desc":"Array serialization"},

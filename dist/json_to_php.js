@@ -4460,7 +4460,7 @@
   	let code;
   	core.registerLanguage("php", php_1);
   	let visibilities = Object.values(Visibility);
-  	let json = "{\"name\":\"php\",\"message\":[]}";
+  	let json = "{\"name\":\"php\",\"message\":\"rocks!\"}";
 
   	let boolOptions = [
   		{
