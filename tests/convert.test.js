@@ -56,4 +56,79 @@ describe("convert",() =>{
             }
         )).toEqual(stub.classWithNamespace);
     });
+
+    test("it adds getters",() => {
+        expect(convert(
+            `{"boolean":true,"string":"string"}`,{
+                className: "Namespaced",
+                namespace: "App\\Foo",
+                getters: true
+            }
+        )).toEqual(stub.classWithGetters);
+    });
+
+    test("it adds getters with return type and typed method",() => {
+        expect(convert(
+            `{"boolean":true,"string":"string"}`,{
+                className: "Namespaced",
+                namespace: "App\\Foo",
+                getters: true,
+                typedMethods: true
+            }
+        )).toEqual(stub.classWithGettersAndReturnType);
+    });
+
+    test("setters",() => {
+        expect(convert(
+            `{"boolean":true,"string":"string"}`,{
+                className: "Namespaced",
+                namespace: "App\\Foo",
+                getters: true,
+                setters: true,
+                typedProperties: true
+            }
+        )).toEqual(stub.classWithSettersWithoutTypedMethod);
+    });
+
+    test("setters with type hint and typed method",() => {
+        expect(convert(
+            `{"boolean":true,"string":"string"}`,{
+                className: "Namespaced",
+                namespace: "App\\Foo",
+                getters: true,
+                setters: true,
+                typedMethods: true,
+                typedProperties: true
+            }
+        )).toEqual(stub.classWithSetters);
+    });
+
+    test("arraySerialization",() => {
+        expect(convert(
+            `{"boolean":true,"string":"string"}`,{
+                className: "Namespaced",
+                namespace: "App\\Foo",
+                arraySerialization: true,
+            }
+        )).toEqual(stub.classWithArraySerialization);
+    });
+
+    test("arraySerialization with complex data",() => {
+        expect(convert(
+            `{
+                "foo":{"joe":"mama"},
+                "bars": [
+                    {"foo":"bar","bar":"baz"},
+                    {"foo":"bar","bar":"baz"}
+                ],
+                "bool":true
+            }`,{
+                className: "Namespaced",
+                namespace: "App\\Foo",
+                arraySerialization: true,
+                typedMethods: true,
+                typedProperties: true,
+            }
+        )).toEqual(stub.classWithArraySerializationAndComplexTypes);
+    });
 });

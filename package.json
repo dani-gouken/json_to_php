@@ -20,7 +20,8 @@
   "homepage": "https://github.com/dani-gouken/json_to_php#readme",
   "dependencies": {
     "camel-case": "^4.1.2",
-    "pascal-case": "^3.1.2"
+    "pascal-case": "^3.1.2",
+    "pluralize": "^8.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",

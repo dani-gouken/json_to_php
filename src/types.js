@@ -1,9 +1,9 @@
 import { pascalCase } from "pascal-case";
-export const guessType = (value,name) => {
+export const guessType = (value, name) => {
     const type = typeof value;
-    switch (type){
+    switch (type) {
         case "object":
-            if(Array.isArray(value)){
+            if (Array.isArray(value)) {
                 return "array";
             }
             return pascalCase(name);
@@ -20,4 +20,8 @@ export const guessType = (value,name) => {
         default:
             return undefined;
     }
+}
+
+export function isScalarType(type) {
+    return ["bool","int","float","string"].includes(type) || type == null;
 }
