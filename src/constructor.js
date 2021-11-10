@@ -1,4 +1,3 @@
-import { buildProperties } from "./property";
 import { indent } from "./utils";
 
 /**

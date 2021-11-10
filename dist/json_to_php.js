@@ -1,7 +1,7 @@
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
   factory();
-}((function () { 'use strict';
+})((function () { 'use strict';
 
   function ownKeys(object, enumerableOnly) {
     var keys = Object.keys(object);
@@ -159,6 +159,158 @@
   function camelCase(input, options) {
       if (options === void 0) { options = {}; }
       return pascalCase(input, __assign({ transform: camelCaseTransform }, options));
+  }
+
+  /**
+   * 
+   * @param {string} string 
+   * @param {number} level 
+   * @param {number} spaceCount 
+   */
+  function indent(string) {
+    var level = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+    var spaceCount = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 4;
+    var space = " ".repeat(spaceCount * level);
+    return space + string;
+  }
+
+  function isEmpty(val) {
+    return Array.isArray(val) && val.length === 0;
+  }
+
+  /**
+   * @param {Property}
+   */
+
+  function buildConstructor(properties, config) {
+    if (!config.arraySerialization) {
+      return "";
+    }
+
+    var result = "\n\n";
+    var declaration = "";
+    declaration += "public function __construct(";
+    declaration += buildParameters(properties, config);
+    declaration += "){\n";
+    result += indent(declaration, 1);
+    result += buildBody(properties);
+    result += indent("}", 1);
+    return result + "\n";
+  }
+
+  function buildParameters(properties, _ref) {
+    var typedMethods = _ref.typedMethods;
+    var result = "";
+    var propertiesCount = properties.length;
+    properties.forEach(function (property, i) {
+      if (typedMethods && property.type != undefined) {
+        result += property.type + " ";
+      }
+
+      result += "$" + property.name;
+
+      if (i < propertiesCount - 1) {
+        result += ", ";
+      }
+    });
+    return result;
+  }
+
+  function buildBody(properties, config) {
+    var result = "";
+    var propertiesCount = properties.length;
+    properties.forEach(function (property, i) {
+      var line = "";
+      line += "$this->".concat(property.name, " = $").concat(property.name, ";");
+
+      if (i < propertiesCount - 1) {
+        line += "\n";
+      }
+
+      result += indent(line, 2);
+    });
+    return result + "\n";
+  }
+
+  /**
+   * 
+   * @param {Property} property 
+   * @param {Config} config 
+   */
+
+  function buildSetter(property, _ref) {
+    _ref.typedProperties;
+        var typedMethods = _ref.typedMethods;
+    var methodName = camelCase("set" + "_" + property.name);
+    var result = "";
+    var declaration = "public function ".concat(methodName, "(");
+    declaration += "".concat(typedMethods && property.type != undefined ? property.type + " " : "", "$").concat(property.name);
+    declaration += !typedMethods ? ")" : "):void";
+    result += indent(declaration + "{\n", 1);
+    result += indent("$this->".concat(property.name, " = $").concat(property.name, ";\n"), 2);
+    result += indent("}", 1);
+    return result;
+  }
+
+  function buildSetters(properties, config) {
+    if (!config.setters) return "";
+    return buildMethod(buildSetter, properties, config);
+  }
+  /**
+   * 
+   * @param {Property} property 
+   * @param {Config} config 
+   */
+
+
+  function buildGetter(property, _ref2) {
+    _ref2.typedProperties;
+        var typedMethods = _ref2.typedMethods;
+    var prefix = property.type == "bool" ? "is" : "get";
+    var methodName = camelCase(prefix + "_" + property.name);
+    var result = "";
+    var declaration = "public function ".concat(methodName, "()");
+
+    if (typedMethods && property.type !== undefined) {
+      declaration += ":" + property.type;
+    }
+
+    result += indent(declaration + "{\n", 1);
+    result += indent("return $this->".concat(property.name, ";\n"), 2);
+    result += indent("}", 1);
+    return result;
+  }
+  /**
+   * 
+   * @param {Property[]} properties 
+   * @param {Config} config 
+   */
+
+
+  function buildGetters(properties, config) {
+    if (!config.getters) return "";
+    return buildMethod(buildGetter, properties, config);
+  }
+  /**
+   * 
+   * @param {Property[]} properties 
+   * @param {Config} config 
+   */
+
+
+  function buildMethod(callback, properties, config) {
+    if (!config.getters && !config.setters) return "";
+    var result = "\n";
+    var l = properties.length;
+    properties.forEach(function (p, i) {
+      result += "\n";
+      result += callback(p, config);
+
+      if (i < l - 1) {
+        result += "\n";
+      }
+    });
+    return result;
   }
 
   var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
@@ -706,23 +858,6 @@
   }
 
   /**
-   * 
-   * @param {string} string 
-   * @param {number} level 
-   * @param {number} spaceCount 
-   */
-  function indent(string) {
-    var level = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-    var spaceCount = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 4;
-    var space = " ".repeat(spaceCount * level);
-    return space + string;
-  }
-
-  function isEmpty(val) {
-    return Array.isArray(val) && val.length === 0;
-  }
-
-  /**
    * Property visibility.
    * @readonly
    * @enum {string}
@@ -792,144 +927,9 @@
   }
 
   /**
-   * @param {Property}
-   */
-
-  function buildConstructor(properties, config) {
-    if (!config.arraySerialization) {
-      return "";
-    }
-
-    var result = "\n\n";
-    var declaration = "";
-    declaration += "public function __construct(";
-    declaration += buildParameters(properties, config);
-    declaration += "){\n";
-    result += indent(declaration, 1);
-    result += buildBody(properties);
-    result += indent("}", 1);
-    return result + "\n";
-  }
-
-  function buildParameters(properties, _ref) {
-    var typedMethods = _ref.typedMethods;
-    var result = "";
-    var propertiesCount = properties.length;
-    properties.forEach(function (property, i) {
-      if (typedMethods && property.type != undefined) {
-        result += property.type + " ";
-      }
-
-      result += "$" + property.name;
-
-      if (i < propertiesCount - 1) {
-        result += ", ";
-      }
-    });
-    return result;
-  }
-
-  function buildBody(properties, config) {
-    var result = "";
-    var propertiesCount = properties.length;
-    properties.forEach(function (property, i) {
-      var line = "";
-      line += "$this->".concat(property.name, " = $").concat(property.name, ";");
-
-      if (i < propertiesCount - 1) {
-        line += "\n";
-      }
-
-      result += indent(line, 2);
-    });
-    return result + "\n";
-  }
-
-  /**
-   * 
-   * @param {Property} property 
-   * @param {Config} config 
-   */
-
-  function buildSetter(property, _ref) {
-    _ref.typedProperties;
-        var typedMethods = _ref.typedMethods;
-    var methodName = camelCase("set" + "_" + property.name);
-    var result = "";
-    var declaration = "public function ".concat(methodName, "(");
-    declaration += "".concat(typedMethods && property.type != undefined ? property.type + " " : "", "$").concat(property.name);
-    declaration += !typedMethods ? ")" : "):void";
-    result += indent(declaration + "{\n", 1);
-    result += indent("$this->".concat(property.name, " = $").concat(property.name, ";\n"), 2);
-    result += indent("}", 1);
-    return result;
-  }
-
-  function buildSetters(properties, config) {
-    if (!config.setters) return "";
-    return buildMethod(buildSetter, properties, config);
-  }
-  /**
-   * 
-   * @param {Property} property 
-   * @param {Config} config 
-   */
-
-
-  function buildGetter(property, _ref2) {
-    _ref2.typedProperties;
-        var typedMethods = _ref2.typedMethods;
-    var prefix = property.type == "bool" ? "is" : "get";
-    var methodName = camelCase(prefix + "_" + property.name);
-    var result = "";
-    var declaration = "public function ".concat(methodName, "()");
-
-    if (typedMethods && property.type !== undefined) {
-      declaration += ":" + property.type;
-    }
-
-    result += indent(declaration + "{\n", 1);
-    result += indent("return $this->".concat(property.name, ";\n"), 2);
-    result += indent("}", 1);
-    return result;
-  }
-  /**
-   * 
-   * @param {Property[]} properties 
-   * @param {Config} config 
-   */
-
-
-  function buildGetters(properties, config) {
-    if (!config.getters) return "";
-    return buildMethod(buildGetter, properties, config);
-  }
-  /**
-   * 
-   * @param {Property[]} properties 
-   * @param {Config} config 
-   */
-
-
-  function buildMethod(callback, properties, config) {
-    if (!config.getters && !config.setters) return "";
-    var result = "\n";
-    var l = properties.length;
-    properties.forEach(function (p, i) {
-      result += "\n";
-      result += callback(p, config);
-
-      if (i < l - 1) {
-        result += "\n";
-      }
-    });
-    return result;
-  }
-
-  /**
-   * 
+   *
    * @param {Config} className
-   * @param {string[]} properties 
+   * @param {string[]} properties
    */
 
   function buildClass(config, deps, json) {
@@ -945,10 +945,10 @@
   }
   /**
    * @typedef {Object} ClassInfo
-   * @property {string} className 
+   * @property {string} className
    * @property {Property[]} properties
-   * 
-   * @param {object} json 
+   *
+   * @param {object} json
    * @param {Config} className
    * @param {Config} config
    */
@@ -958,22 +958,22 @@
     var keys = Object.keys(json);
     var properties = keys.map(function (key) {
       var info = getPropertyInfo(key, json[key], config);
-      if (isScalarType(info.type) || info.subtype === null) return info;
+      if (isScalarType(info.type) || isScalarType(info.subtype) || info.subtype === null) return info;
       var depName = info.type === "array" ? info.subtype : info.type;
 
       if (!deps.has(depName)) {
         deps.add({
-          "className": depName,
-          "key": key,
-          "value": info.type === "array" ? json[key][0] : json[key]
+          className: depName,
+          key: key,
+          value: info.type === "array" ? json[key][0] : json[key]
         });
       }
 
       return info;
     });
     return {
-      "className": className,
-      "properties": properties
+      className: className,
+      properties: properties
     };
   }
 
@@ -984,6 +984,14 @@
 
     return buildFromArray(properties, config, className) + buildToArray(properties, config);
   }
+  /**
+   *
+   * @param {import("./property").Property[]} properties
+   * @param {import("./convert").Config} config
+   * @param {string} className
+   * @returns
+   */
+
 
   function buildFromArray(properties, _ref, className) {
     var typedMethods = _ref.typedMethods;
@@ -1004,7 +1012,7 @@
         return;
       }
 
-      if (property.type === "array") {
+      if (property.type === "array" && !isScalarType(property.subtype)) {
         content += indent("array_map(function($item){\n", 3);
         content += indent("return ".concat(property.subtype, "::fromArray($item);\n"), 4);
         content += indent("},$data[\"".concat(property.originalName, "\"])").concat(isLast ? "" : ","), 3);
@@ -1034,7 +1042,7 @@
       var isLast = i >= propertiesCount - 1;
 
       if (isScalarType(property.type) || isScalarType(property.subtype)) {
-        content = "\"".concat(property.originalName, "\" => $this->").concat(property.name).concat(isLast ? "" : ",");
+        content = "\"".concat(property.originalName, "\"=>$this->").concat(property.name).concat(isLast ? "" : ",");
         result += indent(content + "\n", 3);
         return;
       }
@@ -1222,120 +1230,11 @@
   function is_empty(obj) {
       return Object.keys(obj).length === 0;
   }
-
-  // Track which nodes are claimed during hydration. Unclaimed nodes can then be removed from the DOM
-  // at the end of hydration without touching the remaining nodes.
-  let is_hydrating = false;
-  function start_hydrating() {
-      is_hydrating = true;
-  }
-  function end_hydrating() {
-      is_hydrating = false;
-  }
-  function upper_bound(low, high, key, value) {
-      // Return first index of value larger than input value in the range [low, high)
-      while (low < high) {
-          const mid = low + ((high - low) >> 1);
-          if (key(mid) <= value) {
-              low = mid + 1;
-          }
-          else {
-              high = mid;
-          }
-      }
-      return low;
-  }
-  function init_hydrate(target) {
-      if (target.hydrate_init)
-          return;
-      target.hydrate_init = true;
-      // We know that all children have claim_order values since the unclaimed have been detached
-      const children = target.childNodes;
-      /*
-      * Reorder claimed children optimally.
-      * We can reorder claimed children optimally by finding the longest subsequence of
-      * nodes that are already claimed in order and only moving the rest. The longest
-      * subsequence subsequence of nodes that are claimed in order can be found by
-      * computing the longest increasing subsequence of .claim_order values.
-      *
-      * This algorithm is optimal in generating the least amount of reorder operations
-      * possible.
-      *
-      * Proof:
-      * We know that, given a set of reordering operations, the nodes that do not move
-      * always form an increasing subsequence, since they do not move among each other
-      * meaning that they must be already ordered among each other. Thus, the maximal
-      * set of nodes that do not move form a longest increasing subsequence.
-      */
-      // Compute longest increasing subsequence
-      // m: subsequence length j => index k of smallest value that ends an increasing subsequence of length j
-      const m = new Int32Array(children.length + 1);
-      // Predecessor indices + 1
-      const p = new Int32Array(children.length);
-      m[0] = -1;
-      let longest = 0;
-      for (let i = 0; i < children.length; i++) {
-          const current = children[i].claim_order;
-          // Find the largest subsequence length such that it ends in a value less than our current value
-          // upper_bound returns first greater value, so we subtract one
-          const seqLen = upper_bound(1, longest + 1, idx => children[m[idx]].claim_order, current) - 1;
-          p[i] = m[seqLen] + 1;
-          const newLen = seqLen + 1;
-          // We can guarantee that current is the smallest value. Otherwise, we would have generated a longer sequence.
-          m[newLen] = i;
-          longest = Math.max(newLen, longest);
-      }
-      // The longest increasing subsequence of nodes (initially reversed)
-      const lis = [];
-      // The rest of the nodes, nodes that will be moved
-      const toMove = [];
-      let last = children.length - 1;
-      for (let cur = m[longest] + 1; cur != 0; cur = p[cur - 1]) {
-          lis.push(children[cur - 1]);
-          for (; last >= cur; last--) {
-              toMove.push(children[last]);
-          }
-          last--;
-      }
-      for (; last >= 0; last--) {
-          toMove.push(children[last]);
-      }
-      lis.reverse();
-      // We sort the nodes being moved to guarantee that their insertion order matches the claim order
-      toMove.sort((a, b) => a.claim_order - b.claim_order);
-      // Finally, we move the nodes
-      for (let i = 0, j = 0; i < toMove.length; i++) {
-          while (j < lis.length && toMove[i].claim_order >= lis[j].claim_order) {
-              j++;
-          }
-          const anchor = j < lis.length ? lis[j] : null;
-          target.insertBefore(toMove[i], anchor);
-      }
-  }
   function append(target, node) {
-      if (is_hydrating) {
-          init_hydrate(target);
-          if ((target.actual_end_child === undefined) || ((target.actual_end_child !== null) && (target.actual_end_child.parentElement !== target))) {
-              target.actual_end_child = target.firstChild;
-          }
-          if (node !== target.actual_end_child) {
-              target.insertBefore(node, target.actual_end_child);
-          }
-          else {
-              target.actual_end_child = node.nextSibling;
-          }
-      }
-      else if (node.parentNode !== target) {
-          target.appendChild(node);
-      }
+      target.appendChild(node);
   }
   function insert(target, node, anchor) {
-      if (is_hydrating && !anchor) {
-          append(target, node);
-      }
-      else if (node.parentNode !== target || (anchor && node.nextSibling !== anchor)) {
-          target.insertBefore(node, anchor || null);
-      }
+      target.insertBefore(node, anchor || null);
   }
   function detach(node) {
       node.parentNode.removeChild(node);
@@ -1382,6 +1281,7 @@
               return;
           }
       }
+      select.selectedIndex = -1; // no option should be selected
   }
   function select_value(select) {
       const selected_option = select.querySelector(':checked') || select.options[0];
@@ -1502,7 +1402,7 @@
       }
       component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
   }
-  function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
+  function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
       const parent_component = current_component;
       set_current_component(component);
       const $$ = component.$$ = {
@@ -1519,12 +1419,14 @@
           on_disconnect: [],
           before_update: [],
           after_update: [],
-          context: new Map(parent_component ? parent_component.$$.context : options.context || []),
+          context: new Map(options.context || (parent_component ? parent_component.$$.context : [])),
           // everything else
           callbacks: blank_object(),
           dirty,
-          skip_bound: false
+          skip_bound: false,
+          root: options.target || parent_component.$$.root
       };
+      append_styles && append_styles($$.root);
       let ready = false;
       $$.ctx = instance
           ? instance(component, options.props || {}, (i, ret, ...rest) => {
@@ -1545,7 +1447,6 @@
       $$.fragment = create_fragment ? create_fragment($$.ctx) : false;
       if (options.target) {
           if (options.hydrate) {
-              start_hydrating();
               const nodes = children(options.target);
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               $$.fragment && $$.fragment.l(nodes);
@@ -1558,7 +1459,6 @@
           if (options.intro)
               transition_in(component.$$.fragment);
           mount_component(component, options.target, options.anchor, options.customElement);
-          end_hydrating();
           flush();
       }
       set_current_component(parent_component);
@@ -1619,6 +1519,7 @@
   var _default = deepFreeze;
   deepFreezeEs6.default = _default;
 
+  /** @implements CallbackResponse */
   class Response {
     /**
      * @param {CompiledMode} mode
@@ -1628,10 +1529,11 @@
       if (mode.data === undefined) mode.data = {};
 
       this.data = mode.data;
+      this.isMatchIgnored = false;
     }
 
     ignoreMatch() {
-      this.ignore = true;
+      this.isMatchIgnored = true;
     }
   }
 
@@ -1978,6 +1880,15 @@
     return match && match.index === 0;
   }
 
+  // BACKREF_RE matches an open parenthesis or backreference. To avoid
+  // an incorrect parse, it additionally matches the following:
+  // - [...] elements, where the meaning of parentheses and escapes change
+  // - other escape sequences, so we do not misparse escape sequences as
+  //   interesting elements
+  // - non-matching or lookahead parentheses, which do not capture. These
+  //   follow the '(' with a '?'.
+  const BACKREF_RE = /\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./;
+
   // join logically computes regexps.join(separator), but fixes the
   // backreferences so they continue to match.
   // it also places each individual regular expression into it's own
@@ -1989,48 +1900,38 @@
    * @returns {string}
    */
   function join(regexps, separator = "|") {
-    // backreferenceRe matches an open parenthesis or backreference. To avoid
-    // an incorrect parse, it additionally matches the following:
-    // - [...] elements, where the meaning of parentheses and escapes change
-    // - other escape sequences, so we do not misparse escape sequences as
-    //   interesting elements
-    // - non-matching or lookahead parentheses, which do not capture. These
-    //   follow the '(' with a '?'.
-    const backreferenceRe = /\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./;
     let numCaptures = 0;
-    let ret = '';
-    for (let i = 0; i < regexps.length; i++) {
+
+    return regexps.map((regex) => {
       numCaptures += 1;
       const offset = numCaptures;
-      let re = source(regexps[i]);
-      if (i > 0) {
-        ret += separator;
-      }
-      ret += "(";
+      let re = source(regex);
+      let out = '';
+
       while (re.length > 0) {
-        const match = backreferenceRe.exec(re);
-        if (match == null) {
-          ret += re;
+        const match = BACKREF_RE.exec(re);
+        if (!match) {
+          out += re;
           break;
         }
-        ret += re.substring(0, match.index);
+        out += re.substring(0, match.index);
         re = re.substring(match.index + match[0].length);
         if (match[0][0] === '\\' && match[1]) {
           // Adjust the backreference.
-          ret += '\\' + String(Number(match[1]) + offset);
+          out += '\\' + String(Number(match[1]) + offset);
         } else {
-          ret += match[0];
+          out += match[0];
           if (match[0] === '(') {
             numCaptures++;
           }
         }
       }
-      ret += ")";
-    }
-    return ret;
+      return out;
+    }).map(re => `(${re})`).join(separator);
   }
 
   // Common regexps
+  const MATCH_NOTHING_RE = /\b\B/;
   const IDENT_RE = '[a-zA-Z]\\w*';
   const UNDERSCORE_IDENT_RE = '[a-zA-Z_]\\w*';
   const NUMBER_RE = '\\b\\d+(\\.\\d+)?';
@@ -2199,6 +2100,7 @@
 
   var MODES = /*#__PURE__*/Object.freeze({
       __proto__: null,
+      MATCH_NOTHING_RE: MATCH_NOTHING_RE,
       IDENT_RE: IDENT_RE,
       UNDERSCORE_IDENT_RE: UNDERSCORE_IDENT_RE,
       NUMBER_RE: NUMBER_RE,
@@ -2274,6 +2176,11 @@
     mode.__beforeBegin = skipIfhasPrecedingDot;
     mode.keywords = mode.keywords || mode.beginKeywords;
     delete mode.beginKeywords;
+
+    // prevents double relevance, the keywords themselves provide
+    // relevance, the mode doesn't need to double it
+    // eslint-disable-next-line no-undefined
+    if (mode.relevance === undefined) mode.relevance = 0;
   }
 
   /**
@@ -2322,21 +2229,31 @@
     'value' // common variable name
   ];
 
+  const DEFAULT_KEYWORD_CLASSNAME = "keyword";
+
   /**
    * Given raw keywords from a language definition, compile them.
    *
-   * @param {string | Record<string,string>} rawKeywords
+   * @param {string | Record<string,string|string[]> | Array<string>} rawKeywords
    * @param {boolean} caseInsensitive
    */
-  function compileKeywords(rawKeywords, caseInsensitive) {
+  function compileKeywords(rawKeywords, caseInsensitive, className = DEFAULT_KEYWORD_CLASSNAME) {
     /** @type KeywordDict */
     const compiledKeywords = {};
 
-    if (typeof rawKeywords === 'string') { // string
-      splitAndCompile('keyword', rawKeywords);
+    // input can be a string of keywords, an array of keywords, or a object with
+    // named keys representing className (which can then point to a string or array)
+    if (typeof rawKeywords === 'string') {
+      compileList(className, rawKeywords.split(" "));
+    } else if (Array.isArray(rawKeywords)) {
+      compileList(className, rawKeywords);
     } else {
       Object.keys(rawKeywords).forEach(function(className) {
-        splitAndCompile(className, rawKeywords[className]);
+        // collapse all our objects back into the parent object
+        Object.assign(
+          compiledKeywords,
+          compileKeywords(rawKeywords[className], caseInsensitive, className)
+        );
       });
     }
     return compiledKeywords;
@@ -2349,13 +2266,13 @@
      * Ex: "for if when while|5"
      *
      * @param {string} className
-     * @param {string} keywordList
+     * @param {Array<string>} keywordList
      */
-    function splitAndCompile(className, keywordList) {
+    function compileList(className, keywordList) {
       if (caseInsensitive) {
-        keywordList = keywordList.toLowerCase();
+        keywordList = keywordList.map(x => x.toLowerCase());
       }
-      keywordList.split(' ').forEach(function(keyword) {
+      keywordList.forEach(function(keyword) {
         const pair = keyword.split('|');
         compiledKeywords[pair[0]] = [className, scoreForKeyword(pair[0], pair[1])];
       });
@@ -2661,7 +2578,7 @@
      */
     function compileMode(mode, parent) {
       const cmode = /** @type CompiledMode */ (mode);
-      if (mode.compiled) return cmode;
+      if (mode.isCompiled) return cmode;
 
       [
         // do this early so compiler extensions generally don't have to worry about
@@ -2683,7 +2600,7 @@
         compileRelevance
       ].forEach(ext => ext(mode, parent));
 
-      mode.compiled = true;
+      mode.isCompiled = true;
 
       let keywordPattern = null;
       if (typeof mode.keywords === "object") {
@@ -2802,7 +2719,7 @@
     return mode;
   }
 
-  var version = "10.5.0";
+  var version = "10.7.3";
 
   // @ts-nocheck
 
@@ -2876,8 +2793,8 @@
 
   /** @type {HLJSPlugin} */
   const mergeHTMLPlugin = {
-    "after:highlightBlock": ({ block, result, text }) => {
-      const originalStream = nodeStream(block);
+    "after:highlightElement": ({ el, result, text }) => {
+      const originalStream = nodeStream(el);
       if (!originalStream.length) return;
 
       const resultNode = document.createElement('div');
@@ -3035,6 +2952,11 @@
   */
 
   /**
+   * @type {Record<string, boolean>}
+   */
+  const seenDeprecations = {};
+
+  /**
    * @param {string} message
    */
   const error = (message) => {
@@ -3054,7 +2976,10 @@
    * @param {string} message
    */
   const deprecated = (version, message) => {
+    if (seenDeprecations[`${version}/${message}`]) return;
+
     console.log(`Deprecated as of ${version}. ${message}`);
+    seenDeprecations[`${version}/${message}`] = true;
   };
 
   /*
@@ -3139,8 +3064,14 @@
     /**
      * Core highlighting function.
      *
-     * @param {string} languageName - the language to use for highlighting
-     * @param {string} code - the code to highlight
+     * OLD API
+     * highlight(lang, code, ignoreIllegals, continuation)
+     *
+     * NEW API
+     * highlight(code, {lang, ignoreIllegals})
+     *
+     * @param {string} codeOrlanguageName - the language to use for highlighting
+     * @param {string | HighlightOptions} optionsOrCode - the code to highlight
      * @param {boolean} [ignoreIllegals] - whether to ignore illegal matches, default is to bail
      * @param {CompiledMode} [continuation] - current continuation mode, if any
      *
@@ -3152,7 +3083,24 @@
      * @property {CompiledMode} top - top of the current mode stack
      * @property {boolean} illegal - indicates whether any illegal matches were found
     */
-    function highlight(languageName, code, ignoreIllegals, continuation) {
+    function highlight(codeOrlanguageName, optionsOrCode, ignoreIllegals, continuation) {
+      let code = "";
+      let languageName = "";
+      if (typeof optionsOrCode === "object") {
+        code = codeOrlanguageName;
+        ignoreIllegals = optionsOrCode.ignoreIllegals;
+        languageName = optionsOrCode.language;
+        // continuation not supported at all via the new API
+        // eslint-disable-next-line no-undefined
+        continuation = undefined;
+      } else {
+        // old API
+        deprecated("10.7.0", "highlight(lang, code, ...args) has been deprecated.");
+        deprecated("10.7.0", "Please use highlight(code, options) instead.\nhttps://github.com/highlightjs/highlight.js/issues/2277");
+        languageName = codeOrlanguageName;
+        code = optionsOrCode;
+      }
+
       /** @type {BeforeHighlightContext} */
       const context = {
         code,
@@ -3164,9 +3112,9 @@
 
       // a before plugin can usurp the result completely by providing it's own
       // in which case we don't even need to call highlight
-      const result = context.result ?
-        context.result :
-        _highlight(context.language, context.code, ignoreIllegals, continuation);
+      const result = context.result
+        ? context.result
+        : _highlight(context.language, context.code, ignoreIllegals, continuation);
 
       result.code = context.code;
       // the plugin can change anything in result to suite it
@@ -3179,14 +3127,12 @@
      * private highlight that's used internally and does not fire callbacks
      *
      * @param {string} languageName - the language to use for highlighting
-     * @param {string} code - the code to highlight
-     * @param {boolean} [ignoreIllegals] - whether to ignore illegal matches, default is to bail
-     * @param {CompiledMode} [continuation] - current continuation mode, if any
+     * @param {string} codeToHighlight - the code to highlight
+     * @param {boolean?} [ignoreIllegals] - whether to ignore illegal matches, default is to bail
+     * @param {CompiledMode?} [continuation] - current continuation mode, if any
      * @returns {HighlightResult} - result of the highlight operation
     */
-    function _highlight(languageName, code, ignoreIllegals, continuation) {
-      const codeToHighlight = code;
-
+    function _highlight(languageName, codeToHighlight, ignoreIllegals, continuation) {
       /**
        * Return keyword data if a match is a keyword
        * @param {CompiledMode} mode - current mode
@@ -3218,8 +3164,14 @@
             buf = "";
 
             relevance += keywordRelevance;
-            const cssClass = language.classNameAliases[kind] || kind;
-            emitter.addKeyword(match[0], cssClass);
+            if (kind.startsWith("_")) {
+              // _ implied for relevance only, do not highlight
+              // by applying a class name
+              buf += match[0];
+            } else {
+              const cssClass = language.classNameAliases[kind] || kind;
+              emitter.addKeyword(match[0], cssClass);
+            }
           } else {
             buf += match[0];
           }
@@ -3289,7 +3241,7 @@
           if (mode["on:end"]) {
             const resp = new Response(mode);
             mode["on:end"](match, resp);
-            if (resp.ignore) matched = false;
+            if (resp.isMatchIgnored) matched = false;
           }
 
           if (matched) {
@@ -3341,7 +3293,7 @@
         for (const cb of beforeCallbacks) {
           if (!cb) continue;
           cb(match, resp);
-          if (resp.ignore) return doIgnore(lexeme);
+          if (resp.isMatchIgnored) return doIgnore(lexeme);
         }
 
         if (newMode && newMode.endSameAsBegin) {
@@ -3554,7 +3506,9 @@
         result = emitter.toHTML();
 
         return {
-          relevance: relevance,
+          // avoid possible breakage with v10 clients expecting
+          // this to always be an integer
+          relevance: Math.floor(relevance),
           value: result,
           language: languageName,
           illegal: false,
@@ -3703,12 +3657,12 @@
 
     /** @type {HLJSPlugin} */
     const brPlugin = {
-      "before:highlightBlock": ({ block }) => {
+      "before:highlightElement": ({ el }) => {
         if (options.useBR) {
-          block.innerHTML = block.innerHTML.replace(/\n/g, '').replace(/<br[ /]*>/g, '\n');
+          el.innerHTML = el.innerHTML.replace(/\n/g, '').replace(/<br[ /]*>/g, '\n');
         }
       },
-      "after:highlightBlock": ({ result }) => {
+      "after:highlightElement": ({ result }) => {
         if (options.useBR) {
           result.value = result.value.replace(/\n/g, "<br>");
         }
@@ -3718,7 +3672,7 @@
     const TAB_REPLACE_RE = /^(<[^>]+>|\t)+/gm;
     /** @type {HLJSPlugin} */
     const tabReplacePlugin = {
-      "after:highlightBlock": ({ result }) => {
+      "after:highlightElement": ({ result }) => {
         if (options.tabReplace) {
           result.value = result.value.replace(TAB_REPLACE_RE, (m) =>
             m.replace(/\t/g, options.tabReplace)
@@ -3733,21 +3687,23 @@
      *
      * @param {HighlightedHTMLElement} element - the HTML element to highlight
     */
-    function highlightBlock(element) {
+    function highlightElement(element) {
       /** @type HTMLElement */
       let node = null;
       const language = blockLanguage(element);
 
       if (shouldNotHighlight(language)) return;
 
-      fire("before:highlightBlock",
-        { block: element, language: language });
+      // support for v10 API
+      fire("before:highlightElement",
+        { el: element, language: language });
 
       node = element;
       const text = node.textContent;
-      const result = language ? highlight(language, text, true) : highlightAuto(text);
+      const result = language ? highlight(text, { language, ignoreIllegals: true }) : highlightAuto(text);
 
-      fire("after:highlightBlock", { block: element, result, text });
+      // support for v10 API
+      fire("after:highlightElement", { el: element, result, text });
 
       element.innerHTML = result.value;
       updateClassName(element, language, result.language);
@@ -3785,18 +3741,48 @@
      *
      * @type {Function & {called?: boolean}}
      */
+    // TODO: remove v12, deprecated
     const initHighlighting = () => {
       if (initHighlighting.called) return;
       initHighlighting.called = true;
 
+      deprecated("10.6.0", "initHighlighting() is deprecated.  Use highlightAll() instead.");
+
       const blocks = document.querySelectorAll('pre code');
-      blocks.forEach(highlightBlock);
+      blocks.forEach(highlightElement);
     };
 
     // Higlights all when DOMContentLoaded fires
+    // TODO: remove v12, deprecated
     function initHighlightingOnLoad() {
-      // @ts-ignore
-      window.addEventListener('DOMContentLoaded', initHighlighting, false);
+      deprecated("10.6.0", "initHighlightingOnLoad() is deprecated.  Use highlightAll() instead.");
+      wantsHighlight = true;
+    }
+
+    let wantsHighlight = false;
+
+    /**
+     * auto-highlights all pre>code elements on the page
+     */
+    function highlightAll() {
+      // if we are called too early in the loading process
+      if (document.readyState === "loading") {
+        wantsHighlight = true;
+        return;
+      }
+
+      const blocks = document.querySelectorAll('pre code');
+      blocks.forEach(highlightElement);
+    }
+
+    function boot() {
+      // if a highlight was requested before DOM was loaded, do now
+      if (wantsHighlight) highlightAll();
+    }
+
+    // make sure we are in the browser environment
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      window.addEventListener('DOMContentLoaded', boot, false);
     }
 
     /**
@@ -3826,6 +3812,20 @@
 
       if (lang.aliases) {
         registerAliases(lang.aliases, { languageName });
+      }
+    }
+
+    /**
+     * Remove a language grammar module
+     *
+     * @param {string} languageName
+     */
+    function unregisterLanguage(languageName) {
+      delete languages[languageName];
+      for (const alias of Object.keys(aliases)) {
+        if (aliases[alias] === languageName) {
+          delete aliases[alias];
+        }
       }
     }
 
@@ -3874,7 +3874,7 @@
       if (typeof aliasList === 'string') {
         aliasList = [aliasList];
       }
-      aliasList.forEach(alias => { aliases[alias] = languageName; });
+      aliasList.forEach(alias => { aliases[alias.toLowerCase()] = languageName; });
     }
 
     /**
@@ -3887,9 +3887,33 @@
     }
 
     /**
+     * Upgrades the old highlightBlock plugins to the new
+     * highlightElement API
+     * @param {HLJSPlugin} plugin
+     */
+    function upgradePluginAPI(plugin) {
+      // TODO: remove with v12
+      if (plugin["before:highlightBlock"] && !plugin["before:highlightElement"]) {
+        plugin["before:highlightElement"] = (data) => {
+          plugin["before:highlightBlock"](
+            Object.assign({ block: data.el }, data)
+          );
+        };
+      }
+      if (plugin["after:highlightBlock"] && !plugin["after:highlightElement"]) {
+        plugin["after:highlightElement"] = (data) => {
+          plugin["after:highlightBlock"](
+            Object.assign({ block: data.el }, data)
+          );
+        };
+      }
+    }
+
+    /**
      * @param {HLJSPlugin} plugin
      */
     function addPlugin(plugin) {
+      upgradePluginAPI(plugin);
       plugins.push(plugin);
     }
 
@@ -3920,16 +3944,31 @@
       return fixMarkup(arg);
     }
 
+    /**
+     *
+     * @param {HighlightedHTMLElement} el
+     */
+    function deprecateHighlightBlock(el) {
+      deprecated("10.7.0", "highlightBlock will be removed entirely in v12.0");
+      deprecated("10.7.0", "Please use highlightElement now.");
+
+      return highlightElement(el);
+    }
+
     /* Interface definition */
     Object.assign(hljs, {
       highlight,
       highlightAuto,
+      highlightAll,
       fixMarkup: deprecateFixMarkup,
-      highlightBlock,
+      highlightElement,
+      // TODO: Remove with v12 API
+      highlightBlock: deprecateHighlightBlock,
       configure,
       initHighlighting,
       initHighlightingOnLoad,
       registerLanguage,
+      unregisterLanguage,
       listLanguages,
       getLanguage,
       registerAliases,
@@ -4030,7 +4069,17 @@
         HEREDOC
       ]
     };
-    const NUMBER = {variants: [hljs.BINARY_NUMBER_MODE, hljs.C_NUMBER_MODE]};
+    const NUMBER = {
+      className: 'number',
+      variants: [
+        { begin: `\\b0b[01]+(?:_[01]+)*\\b` }, // Binary w/ underscore support
+        { begin: `\\b0o[0-7]+(?:_[0-7]+)*\\b` }, // Octals w/ underscore support
+        { begin: `\\b0x[\\da-f]+(?:_[\\da-f]+)*\\b` }, // Hex w/ underscore support
+        // Decimals w/ underscore support, with optional fragments and scientific exponent (e) suffix.
+        { begin: `(?:\\b\\d+(?:_\\d+)*(\\.(?:\\d+(?:_\\d+)*))?|\\B\\.\\d+)(?:e[+-]?\\d+)?` }
+      ],
+      relevance: 0
+    };
     const KEYWORDS = {
       keyword:
       // Magic constants:
@@ -4045,25 +4094,25 @@
       // <https://www.php.net/manual/en/reserved.php>
       // <https://www.php.net/manual/en/language.types.type-juggling.php>
       'array abstract and as binary bool boolean break callable case catch class clone const continue declare ' +
-      'default do double else elseif empty enddeclare endfor endforeach endif endswitch endwhile eval extends ' +
+      'default do double else elseif empty enddeclare endfor endforeach endif endswitch endwhile enum eval extends ' +
       'final finally float for foreach from global goto if implements instanceof insteadof int integer interface ' +
-      'isset iterable list match|0 new object or private protected public real return string switch throw trait ' +
+      'isset iterable list match|0 mixed new object or private protected public real return string switch throw trait ' +
       'try unset use var void while xor yield',
       literal: 'false null true',
       built_in:
       // Standard PHP library:
       // <https://www.php.net/manual/en/book.spl.php>
       'Error|0 ' + // error is too common a name esp since PHP is case in-sensitive
-      'AppendIterator ArgumentCountError ArithmeticError ArrayIterator ArrayObject AssertionError BadFunctionCallException BadMethodCallException CachingIterator CallbackFilterIterator CompileError Countable DirectoryIterator DivisionByZeroError DomainException EmptyIterator ErrorException Exception FilesystemIterator FilterIterator GlobIterator InfiniteIterator InvalidArgumentException IteratorIterator LengthException LimitIterator LogicException MultipleIterator NoRewindIterator OutOfBoundsException OutOfRangeException OuterIterator OverflowException ParentIterator ParseError RangeException RecursiveArrayIterator RecursiveCachingIterator RecursiveCallbackFilterIterator RecursiveDirectoryIterator RecursiveFilterIterator RecursiveIterator RecursiveIteratorIterator RecursiveRegexIterator RecursiveTreeIterator RegexIterator RuntimeException SeekableIterator SplDoublyLinkedList SplFileInfo SplFileObject SplFixedArray SplHeap SplMaxHeap SplMinHeap SplObjectStorage SplObserver SplObserver SplPriorityQueue SplQueue SplStack SplSubject SplSubject SplTempFileObject TypeError UnderflowException UnexpectedValueException ' +
+      'AppendIterator ArgumentCountError ArithmeticError ArrayIterator ArrayObject AssertionError BadFunctionCallException BadMethodCallException CachingIterator CallbackFilterIterator CompileError Countable DirectoryIterator DivisionByZeroError DomainException EmptyIterator ErrorException Exception FilesystemIterator FilterIterator GlobIterator InfiniteIterator InvalidArgumentException IteratorIterator LengthException LimitIterator LogicException MultipleIterator NoRewindIterator OutOfBoundsException OutOfRangeException OuterIterator OverflowException ParentIterator ParseError RangeException RecursiveArrayIterator RecursiveCachingIterator RecursiveCallbackFilterIterator RecursiveDirectoryIterator RecursiveFilterIterator RecursiveIterator RecursiveIteratorIterator RecursiveRegexIterator RecursiveTreeIterator RegexIterator RuntimeException SeekableIterator SplDoublyLinkedList SplFileInfo SplFileObject SplFixedArray SplHeap SplMaxHeap SplMinHeap SplObjectStorage SplObserver SplObserver SplPriorityQueue SplQueue SplStack SplSubject SplSubject SplTempFileObject TypeError UnderflowException UnexpectedValueException UnhandledMatchError ' +
       // Reserved interfaces:
       // <https://www.php.net/manual/en/reserved.interfaces.php>
-      'ArrayAccess Closure Generator Iterator IteratorAggregate Serializable Throwable Traversable WeakReference ' +
+      'ArrayAccess Closure Generator Iterator IteratorAggregate Serializable Stringable Throwable Traversable WeakReference WeakMap ' +
       // Reserved classes:
       // <https://www.php.net/manual/en/reserved.classes.php>
       'Directory __PHP_Incomplete_Class parent php_user_filter self static stdClass'
     };
     return {
-      aliases: ['php', 'php3', 'php4', 'php5', 'php6', 'php7', 'php8'],
+      aliases: ['php3', 'php4', 'php5', 'php6', 'php7', 'php8'],
       case_insensitive: true,
       keywords: KEYWORDS,
       contains: [
@@ -4104,9 +4153,13 @@
           beginKeywords: 'fn function', end: /[;{]/, excludeEnd: true,
           illegal: '[$%\\[]',
           contains: [
+            {
+              beginKeywords: 'use',
+            },
             hljs.UNDERSCORE_TITLE_MODE,
             {
-              begin: '=>' // No markup, just a relevance booster
+              begin: '=>', // No markup, just a relevance booster
+              endsParent: true
             },
             {
               className: 'params',
@@ -4126,11 +4179,13 @@
         },
         {
           className: 'class',
-          beginKeywords: 'class interface',
+          variants: [
+            { beginKeywords: "enum", illegal: /[($"]/ },
+            { beginKeywords: "class interface trait", illegal: /[:($"]/ }
+          ],
           relevance: 0,
           end: /\{/,
           excludeEnd: true,
-          illegal: /[:($"]/,
           contains: [
             {beginKeywords: 'extends implements'},
             hljs.UNDERSCORE_TITLE_MODE
@@ -4157,7 +4212,7 @@
 
   var php_1 = php;
 
-  /* src/components/App.svelte generated by Svelte v3.38.3 */
+  /* src/components/App.svelte generated by Svelte v3.44.1 */
 
   function get_each_context(ctx, list, i) {
   	const child_ctx = ctx.slice();
@@ -4533,7 +4588,7 @@
   	let code;
   	core.registerLanguage("php", php_1);
   	let visibilities = Object.values(Visibility);
-  	let json = "{\"name\":\"php\",\"message\":\"rocks!\"}";
+  	let json = '{"name":"php","message":"rocks!"}';
 
   	let boolOptions = [
   		{
@@ -4642,4 +4697,4 @@
     target: document.querySelector("#app")
   });
 
-})));
+}));

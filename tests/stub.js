@@ -156,8 +156,8 @@ class Namespaced {
 
     public function toArray(){
         return [
-            "boolean" => $this->boolean,
-            "string" => $this->string
+            "boolean"=>$this->boolean,
+            "string"=>$this->string
         ];
     }
 }
@@ -193,7 +193,39 @@ class Namespaced {
             "bars"=>array_map(function($item){
                 return $item->toArray();
             },$this->bars),
-            "bool" => $this->bool
+            "bool"=>$this->bool
+        ];
+    }
+}
+`
+
+export const classWithArraySerializationAndScalarTypes = 
+`namespace App\\Foo;
+
+class Namespaced {
+    public Foo $foo;
+    public array $bars;
+    public bool $bool;
+
+    public function __construct(Foo $foo, array $bars, bool $bool){
+        $this->foo = $foo;
+        $this->bars = $bars;
+        $this->bool = $bool;
+    }
+
+    public static function fromArray(array $data):Namespaced{
+        return new Namespaced(
+            Foo::fromArray($data["foo"]),
+            $data["bars"],
+            $data["bool"]
+        );
+    }
+
+    public function toArray():array{
+        return [
+            "foo"=>$this->foo->toArray(),
+            "bars"=>$this->bars,
+            "bool"=>$this->bool
         ];
     }
 }

@@ -131,4 +131,19 @@ describe("convert",() =>{
             }
         )).toEqual(stub.classWithArraySerializationAndComplexTypes);
     });
+    test("arraySerialization with complex data",() => {
+        expect(convert(
+            `{
+                "foo":{"joe":"mama"},
+                "bars": [1,2,3],
+                "bool":true
+            }`,{
+                className: "Namespaced",
+                namespace: "App\\Foo",
+                arraySerialization: true,
+                typedMethods: true,
+                typedProperties: true,
+            }
+        )).toEqual(stub.classWithArraySerializationAndScalarTypes);
+    });
 });
